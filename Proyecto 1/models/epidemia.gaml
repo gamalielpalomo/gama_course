@@ -27,6 +27,27 @@ global{
 			status <- "infectado";
 		}	
 	}
+	/*reflex save_heatmap when:length(people where(each.status="infectado"))>150{
+		save cell to:"../results/heatmap.shp" type:"shp" attributes: ["ID":: int(self), "contagios"::contagios*50];
+	}*/
+}
+
+grid cell width:25 height:25{
+	int contagios;
+	int riesgo;
+	init{
+		contagios <- 0;
+		riesgo <- 0;
+	}
+	aspect basic{
+		draw shape color:rgb(50*contagios,255-(50*contagios),0,100);
+	}
+	aspect risk{
+		draw shape color:rgb(50*riesgo,0,0,100);
+	}
+	reflex riesgo when:every(10#cycle) and flip(0.5){
+		riesgo <- length(people inside(self));
+	}
 }
 
 species road{
@@ -70,6 +91,10 @@ species people skills:[moving]{
 			ask contactos_de_riesgo{
 				if status = "susceptible" and flip(beta){
 					status <- "infectado";
+					cell celda <- cell closest_to self.location;
+					ask celda{
+						contagios <- contagios + 1;
+					}
 				}
 			}
 		}
@@ -103,10 +128,10 @@ species people skills:[moving]{
 experiment simulacion type:gui{
 	output{
 		layout #split;
-		display GUI type:opengl background:#black draw_env:false{
+		display GUI type:opengl background:#black draw_env:false refresh:every(5#cycle) and split(0.5){
 			species block aspect:basic;
-			species people aspect:estado_salud;
-			species target aspect:basic;
+			species cell aspect:risk;
+			//species people aspect:estado_salud;
 			overlay position:{10#px,10#px} size:{300#px,300#px} color:#black transparency:0.5{
 				draw "0123456789abcdefghijklmnopqrstuvwxyz," color:#black font:font("Arial",26,#plain) at:{0#px,0#px};
 				draw "0123456789abcdefghijklmnopqrstuvwxyz," color:#black font:font("Arial",20,#bold) at:{0#px,0#px};
@@ -122,7 +147,7 @@ experiment simulacion type:gui{
 			}
 		}
 		display Graficas type:java2D refresh:every(5*step) background:#white {
-			chart "Epidemia" x_serie:time#hours x_serie_labels:time#hours type:series y_label:"Numero de personas" label_font:"Arial" label_font_size:24 legend_font:"Arial" legend_font_size:24 title_visible:false{
+			chart "Epidemia" type:series y_label:"Numero de personas" label_font:"Arial" label_font_size:24 legend_font:"Arial" legend_font_size:24 title_visible:false{
 				data "Susceptibles" value:length(people where(each.status="susceptible")) color:color_agentes["susceptible"] marker:false;
 				data "Infectados" value:length(people where(each.status="infectado")) color:color_agentes["infectado"] marker:false;
 				data "Recuperados" value:length(people where(each.status="recuperado")) color:color_agentes["recuperado"] marker:false;
