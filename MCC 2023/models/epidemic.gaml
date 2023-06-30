@@ -22,7 +22,7 @@ global{
 
 	float min_speed <- 1.0 #km / #h;
 	float max_speed <- 5.0 #km / #h; 
-	float step <- 30#m;
+	float step <- 1#minutes;
 	
 	
 	//HEATMAP
@@ -82,6 +82,7 @@ species people skills:[moving]{
 		ask contacts{
 			if self.epidemic_status = "susceptible"{
 				self.epidemic_status <- "exposed";
+				self.last_change <- current_date;
 			}
 		}
 	}
@@ -117,7 +118,8 @@ species people skills:[moving]{
 				my_color <- #gray;
 			}
 		}
-		draw circle(5) color:my_color;
+		draw circle(1) color:my_color;
+		draw circle(2) wireframe:true border:#red width:2.0;
 	}
 }
 
@@ -129,7 +131,7 @@ species road{
 
 species block{
 	aspect default{
-		draw shape color:rgb(100,100,100,0.5);
+		draw shape color:rgb (162, 136, 230, 255);
 	}
 }
 
